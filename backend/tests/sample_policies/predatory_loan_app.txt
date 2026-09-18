@@ -1,0 +1,53 @@
+CashQuick Instant Loan & Credit Services - Privacy Policy & Terms of Service
+Effective Date: January 1, 2024
+
+1. INTRODUCTION AND ACCEPTANCE
+Welcome to CashQuick ("we", "us", or "our"). This Privacy Policy and Terms of Service govern your access to and use of our mobile lending application, credit scoring utilities, and related financial facilitation services. By downloading, registering, or otherwise utilizing our platform, you acknowledge and agree to the data collection and processing practices described herein.
+
+2. INFORMATION WE COLLECT
+To evaluate loan eligibility and provide automated credit scoring, we require broad access to your device data and personal information.
+We collect personal identification details including your legal name, national identity number, employment records, and bank account numbers.
+We may access your contact list and phone book to verify your identity and assess creditworthiness.
+The app may collect and read your SMS messages and call logs for fraud prevention purposes.
+We collect continuous location data including background location tracking for risk assessment.
+We may access your camera for identity verification and KYC compliance.
+We may collect biometric data including fingerprint and face scan for verification.
+Furthermore, we automatically collect hardware identifiers, IP addresses, network telemetry, and operating system attributes.
+We use advertising ID, tracking cookies, and pixel tags to serve personalized ads.
+We may track your activity across multiple devices and platforms.
+
+3. HOW WE USE YOUR INFORMATION
+All collected data is utilized to underwrite credit risk, process disbursement requests, and optimize proprietary risk evaluation algorithms.
+We may monetize user data for business purposes.
+In case of default, we reserve the right to contact your contacts, references, friends, or family members regarding your outstanding balance.
+
+4. DATA SHARING AND DISCLOSURE
+We collaborate with commercial entities to facilitate liquidity, loan syndication, and targeted marketing campaigns.
+We may share your personal data and information with third-party marketing partners, advertisers, and data brokers.
+Additionally, we disclose user records to debt collection agencies, credit bureaus, legal counsel, and banking intermediaries.
+
+5. PAYMENTS, REPAYMENTS, AND FEES
+All loans disbursed through our platform are subject to interest rates, processing deductions, and schedule conditions set forth in your loan agreement.
+You authorize automatic debit of repayment amounts from your linked bank account.
+Additional processing fees and service charges may apply.
+Late fees and penalty charges of up to 36% per annum will be applied on overdue payments. Default charges shall be levied at the discretion of the company.
+
+6. DATA RETENTION AND ACCOUNT TERMINATION
+We maintain records strictly in accordance with company risk protocols and regulatory archival requirements.
+We retain your personal data and information indefinitely for audit and compliance purposes.
+Your data may be retained even after you delete or deactivate your account.
+We may terminate your account at any time without notice or reason.
+Upon termination, no refund or reimbursement shall be provided.
+
+7. DISPUTE RESOLUTION AND CLASS ACTION WAIVER
+Please read this section carefully as it limits your legal remedies and constitutional access to court proceedings.
+All disputes shall be resolved through mandatory binding arbitration.
+By using this service, you waive your right to file a class-action lawsuit or litigation against us.
+
+8. MODIFICATIONS AND UPDATES
+We continually evolve our operational policies and technological features.
+We may modify these terms and conditions at any time without prior notice.
+Your continued use of the service constitutes acceptance of any modified terms.
+
+9. CONTACT AND LEGAL INQUIRIES
+For regulatory notices or questions regarding this document, contact legal@cashquick-loans.example.com.

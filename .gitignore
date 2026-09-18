@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+venv/
+.venv
+.pytest_cache/
+.coverage
+htmlcov/
+demo_output.txt
+
+# OS
+.DS_Store
+Thumbs.db

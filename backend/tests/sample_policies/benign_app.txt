@@ -1,0 +1,48 @@
+TaskPulse Productivity App - Privacy Policy
+Last Updated: January 15, 2024
+
+1. INTRODUCTION
+TaskPulse ("we", "our", or "us") is dedicated to protecting your privacy. This Privacy Policy outlines how we collect, use, and protect your information when you use our task management and team productivity software. We adhere to privacy-by-design principles and strictly respect your rights under applicable data privacy regulations, including GDPR and CCPA.
+
+2. INFORMATION WE COLLECT AND PURPOSE
+We collect only the minimal information strictly required to provide our productivity services:
+- Account Information: When you create an account, we collect your name and email address to authenticate you and send account-related communications.
+- User Content: Tasks, notes, and project titles created within the app are stored securely to allow synchronization across your authorized devices.
+- Technical Logs: We collect basic device telemetry such as browser version, operating system, and diagnostic crash logs solely to maintain system stability and debug performance issues.
+
+3. COOKIES AND ANALYTICS
+We use first-party cookies and privacy-preserving analytics only to understand general feature usage and enhance platform reliability.
+We do not use third-party advertising cookies or cross-site tracking scripts.
+You can disable cookies in your browser settings at any time without affecting essential application features.
+
+4. DATA SHARING AND DISCLOSURE
+We do not sell, rent, or trade your personal data.
+We do not share data with third parties for marketing or advertising purposes.
+We share data only with verified cloud infrastructure providers (such as hosting and database services) bound by strict data processing agreements and confidentiality obligations solely to operate our service.
+We may disclose data if required by law or a valid subpoena.
+
+5. DATA RETENTION AND DELETION
+We retain your personal information only for as long as your account remains active or as needed to provide you with the services.
+You retain full control over your personal data.
+You may request data export or permanent deletion of your account and associated records at any time by navigating to Settings > Privacy > Delete Account, or by emailing privacy@taskpulse.example.com.
+Upon receiving your deletion request, all personal data is permanently purged from our active systems within 30 days.
+
+6. CHILDREN'S PRIVACY
+Our services are directed to adults and working professionals.
+We do not knowingly collect data from children under 13.
+If we discover that an individual under the age of 13 has provided us with personal information, we will immediately delete such data from our servers.
+
+7. DATA SECURITY MEASURES
+We implement industry-standard encryption protocols (TLS 1.3 in transit and AES-256 at rest) to safeguard user records.
+Access to personal information is restricted to authorized personnel who need to know such information to operate, develop, or improve our service.
+
+8. LIMITATION OF LIABILITY
+To the maximum extent permitted by applicable law, TaskPulse and its affiliates shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the service.
+Our aggregate liability for direct damages shall not exceed the amount paid by you in the twelve months preceding the claim.
+
+9. CHANGES TO THIS PRIVACY POLICY
+We may update this Privacy Policy from time to time to reflect evolving technical practices or legal requirements.
+If we make material changes, we will provide at least 30 days advance notice via email and prominent in-app notification before the changes take effect.
+
+10. CONTACT US
+If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact our Data Protection Officer at dpo@taskpulse.example.com.
