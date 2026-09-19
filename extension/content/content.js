@@ -1,3 +1,7 @@
+// ==========================================================================
+// Policy Safeguard - Content Script (Category Grouping & Glassmorphic UI)
+// ==========================================================================
+
 // Function to check if the current page is likely a privacy policy or terms of service
 function isPolicyPage() {
     const url = window.location.href.toLowerCase();
@@ -33,22 +37,29 @@ function injectSidebar() {
     sidebar.id = 'policy-safeguard-sidebar';
     sidebar.innerHTML = `
         <div class="ps-header">
-            <h2>🛡️ Policy Safeguard</h2>
-            <button class="ps-close-btn" id="ps-close">&times;</button>
+            <div class="ps-header-title">
+                <span class="ps-header-icon">🛡️</span>
+                <h2>Policy Safeguard</h2>
+            </div>
+            <button class="ps-close-btn" id="ps-close" title="Close Sidebar" aria-label="Close">&times;</button>
         </div>
         <div class="ps-content" id="ps-content">
             <div class="ps-loading">
                 <div class="ps-spinner"></div>
-                <p>Analyzing policy text...</p>
+                <div class="ps-loading-title">Analyzing Policy Text...</div>
+                <p class="ps-loading-sub">Scanning clauses for predatory terms and privacy risks</p>
             </div>
         </div>
     `;
     document.body.appendChild(sidebar);
 
-    // Floating Trigger Button
+    // Floating Glassmorphic Trigger Button
     const triggerBtn = document.createElement('button');
     triggerBtn.id = 'policy-safeguard-trigger';
-    triggerBtn.innerHTML = '🛡️ Analyze Policy';
+    triggerBtn.innerHTML = `
+        <span class="ps-btn-icon">🛡️</span>
+        <span class="ps-btn-text">Analyze Policy</span>
+    `;
     document.body.appendChild(triggerBtn);
 
     // Event Listeners
@@ -62,52 +73,248 @@ function injectSidebar() {
     });
 }
 
-// Map severity string to emoji
-function getSeverityEmoji(severity) {
-    if (severity === 'red') return '🔴';
-    if (severity === 'yellow') return '🟡';
-    return '🟢';
+// Helper to safely escape HTML entities
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
-// Render the API response into the sidebar
+// Format snippet with optional highlight of the matched keyword/clause
+function formatSnippet(snippet, matchedText, severity) {
+    if (!snippet) return '';
+    const safeSnippet = escapeHtml(snippet);
+    if (!matchedText) return safeSnippet;
+    
+    const safeMatched = escapeHtml(matchedText.trim());
+    if (!safeMatched) return safeSnippet;
+
+    const highlightClass = severity === 'red' ? 'ps-highlight-red' : 'ps-highlight-yellow';
+    
+    try {
+        const escaped = safeMatched.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escaped})`, 'i');
+        if (regex.test(safeSnippet)) {
+            return safeSnippet.replace(regex, `<mark class="${highlightClass}">$1</mark>`);
+        }
+    } catch (e) {
+        // Fallback to plain escaped text on regex error
+    }
+
+    return safeSnippet;
+}
+
+// Render the API response into the sidebar with category grouping
 function renderReport(report) {
     const contentDiv = document.getElementById('ps-content');
+    if (!contentDiv) return;
+
+    // Determine risk level badge & display text
+    const riskLevel = (report.risk_level || 'safe').toLowerCase();
+    const riskScore = typeof report.overall_risk_score === 'number' ? report.overall_risk_score : 0;
     
-    // Create Score Card
-    const scoreCard = `
-        <div class="ps-score-card ${report.risk_level}">
-            <div class="ps-score-value">${report.overall_risk_score}/100</div>
-            <div>${report.risk_level.toUpperCase()}</div>
+    let levelLabel = 'SAFE';
+    if (riskLevel === 'dangerous') {
+        levelLabel = 'HIGH RISK';
+    } else if (riskLevel === 'caution') {
+        levelLabel = 'MODERATE RISK';
+    } else if (riskLevel === 'safe') {
+        levelLabel = 'LOW RISK';
+    }
+
+    // Counts breakdown
+    const redCount = report.severity_counts ? (report.severity_counts.red || 0) : 0;
+    const yellowCount = report.severity_counts ? (report.severity_counts.yellow || 0) : 0;
+    const greenCount = report.severity_counts ? (report.severity_counts.green || 0) : 0;
+
+    // Score Card HTML with sleek modern gradient & breakdown
+    const scoreCardHtml = `
+        <div class="ps-score-card ${riskLevel}">
+            <div class="ps-score-header">
+                <span class="ps-score-badge-pill">${levelLabel}</span>
+                <span class="ps-score-ratio">Risk Index</span>
+            </div>
+            <div class="ps-score-main">
+                <span class="ps-score-value">${riskScore}</span>
+                <span class="ps-score-max">/100</span>
+            </div>
+            <div class="ps-score-counts">
+                <span class="ps-badge-counter">${redCount} Critical</span>
+                <span class="ps-badge-counter">${yellowCount} Warning</span>
+                <span class="ps-badge-counter">${greenCount} Info</span>
+            </div>
         </div>
-        <div class="ps-summary">${report.summary}</div>
+        ${report.summary ? `
+            <div class="ps-summary-card">
+                <div class="ps-summary-header">
+                    <span>📋 Key Findings</span>
+                </div>
+                <p class="ps-summary-text">${escapeHtml(report.summary)}</p>
+            </div>
+        ` : ''}
     `;
 
-    // Create Match Cards (only red and yellow to save space)
-    let matchesHtml = '<h3>Detected Clauses</h3>';
-    
-    if (report.matches.length === 0) {
-        matchesHtml += '<p>No significant risks found. This policy looks relatively standard.</p>';
+    // Group matches by category
+    const categoryGroups = {};
+    const matches = Array.isArray(report.matches) ? report.matches : [];
+
+    matches.forEach(match => {
+        // Skip green clauses to focus user attention on actionable risks
+        if (match.severity === 'green') return;
+
+        const cat = match.category || 'General Risk';
+        if (!categoryGroups[cat]) {
+            categoryGroups[cat] = {
+                category: cat,
+                severity: match.severity || 'yellow',
+                descriptions: new Set(),
+                recommendations: new Set(),
+                snippets: []
+            };
+        }
+
+        const grp = categoryGroups[cat];
+
+        // Elevate category severity to red if any match in it is red
+        if (match.severity === 'red') {
+            grp.severity = 'red';
+        }
+
+        if (match.description) {
+            grp.descriptions.add(match.description);
+        }
+        if (match.recommendation) {
+            grp.recommendations.add(match.recommendation);
+        }
+
+        const snippetText = match.context_snippet || match.matched_text;
+        if (snippetText) {
+            // Deduplicate exact snippets within the same category
+            const alreadyExists = grp.snippets.some(s => s.context === snippetText);
+            if (!alreadyExists) {
+                grp.snippets.push({
+                    context: snippetText,
+                    matched: match.matched_text || ''
+                });
+            }
+        }
+    });
+
+    // Sort categories: red (critical) first, then yellow (warning)
+    const severityRank = { red: 0, yellow: 1, green: 2 };
+    const sortedCategories = Object.values(categoryGroups).sort((a, b) => {
+        return (severityRank[a.severity] ?? 99) - (severityRank[b.severity] ?? 99);
+    });
+
+    // Build Grouped Cards Section
+    let cardsHtml = '';
+
+    if (sortedCategories.length === 0) {
+        cardsHtml = `
+            <div class="ps-empty-state">
+                <div class="ps-empty-icon">🛡️</div>
+                <div class="ps-empty-title">No Critical Threats Detected</div>
+                <div class="ps-empty-desc">No high or moderate risk clauses were identified. This policy looks relatively standard.</div>
+            </div>
+        `;
     } else {
-        report.matches.forEach(match => {
-            if (match.severity === 'green') return; // Skip green to avoid cluttering UX
-            
-            matchesHtml += `
-                <div class="ps-match-card ${match.severity}">
-                    <div class="ps-match-category">
-                        ${getSeverityEmoji(match.severity)} ${match.category}
+        const totalClauses = sortedCategories.reduce((sum, g) => sum + g.snippets.length, 0);
+        cardsHtml += `
+            <div class="ps-section-header">
+                <h3 class="ps-section-title">Detected Threat Categories</h3>
+                <span class="ps-section-counter">${totalClauses} clause${totalClauses > 1 ? 's' : ''} in ${sortedCategories.length} categor${sortedCategories.length > 1 ? 'ies' : 'y'}</span>
+            </div>
+        `;
+
+        sortedCategories.forEach(grp => {
+            const isRed = grp.severity === 'red';
+            const badgeIcon = isRed ? '🔴' : '⚠️';
+            const badgeClass = isRed ? 'ps-badge-red' : 'ps-badge-yellow';
+            const badgeLabel = isRed ? 'Critical Risk' : 'Warning';
+
+            // Distinct descriptions
+            const descHtml = Array.from(grp.descriptions)
+                .map(d => `<p class="ps-match-desc">${escapeHtml(d)}</p>`)
+                .join('');
+
+            // Distinct recommendations grouped cleanly
+            const recsArray = Array.from(grp.recommendations);
+            let recHtml = '';
+            if (recsArray.length > 0) {
+                recHtml = `
+                    <div class="ps-recommendation-box ${grp.severity}">
+                        <div class="ps-rec-header">
+                            <span class="ps-rec-icon">💡</span>
+                            <span class="ps-rec-title">Actionable Recommendation</span>
+                        </div>
+                        <div class="ps-rec-content">
+                            ${recsArray.map(r => `<div>${escapeHtml(r)}</div>`).join('')}
+                        </div>
                     </div>
-                    <div class="ps-match-desc">${match.description}</div>
-                    <div class="ps-match-snippet">"...${match.matched_text}..."</div>
+                `;
+            }
+
+            // Excerpts list (supporting up to 500 characters context snippets)
+            let snippetsHtml = '';
+            if (grp.snippets.length > 0) {
+                snippetsHtml = `
+                    <div class="ps-snippets-container">
+                        <div class="ps-snippets-header">
+                            Detected Policy Excerpts (${grp.snippets.length})
+                        </div>
+                        <div class="ps-snippets-list">
+                            ${grp.snippets.map((snip, idx) => {
+                                const formatted = formatSnippet(snip.context, snip.matched, grp.severity);
+                                return `
+                                    <div class="ps-snippet-card">
+                                        ${grp.snippets.length > 1 ? `<div class="ps-snippet-num">Excerpt #${idx + 1}</div>` : ''}
+                                        <blockquote class="ps-snippet-quote">${formatted}</blockquote>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            cardsHtml += `
+                <div class="ps-match-card ${grp.severity}">
+                    <div class="ps-match-card-top">
+                        <div class="ps-match-category">
+                            ${escapeHtml(grp.category)}
+                        </div>
+                        <span class="ps-severity-pill ${badgeClass}">
+                            ${badgeIcon} ${badgeLabel}
+                        </span>
+                    </div>
+                    ${descHtml}
+                    ${recHtml}
+                    ${snippetsHtml}
                 </div>
             `;
         });
     }
 
-    contentDiv.innerHTML = scoreCard + matchesHtml;
+    contentDiv.innerHTML = scoreCardHtml + cardsHtml;
 }
 
 // Main function to fetch analysis from backend
 async function analyzePolicy() {
+    const contentDiv = document.getElementById('ps-content');
+    if (contentDiv) {
+        contentDiv.innerHTML = `
+            <div class="ps-loading">
+                <div class="ps-spinner"></div>
+                <div class="ps-loading-title">Analyzing Policy Text...</div>
+                <p class="ps-loading-sub">Scanning clauses for predatory terms and privacy risks</p>
+            </div>
+        `;
+    }
+
     const text = extractPageText();
     
     // Prevent sending massive payloads (cap at ~50k chars)
@@ -126,7 +333,7 @@ async function analyzePolicy() {
         });
 
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error(`Server returned HTTP ${response.status}`);
         }
 
         const data = await response.json();
@@ -134,29 +341,40 @@ async function analyzePolicy() {
 
     } catch (error) {
         console.error('Policy Safeguard Analysis Error:', error);
-        document.getElementById('ps-content').innerHTML = `
-            <div class="ps-loading">
-                <p>❌ Failed to connect to the backend analyzer.</p>
-                <p style="font-size: 12px">Make sure your FastAPI server is running on localhost:8000.</p>
-            </div>
-        `;
+        if (contentDiv) {
+            contentDiv.innerHTML = `
+                <div class="ps-error-state">
+                    <div class="ps-error-icon">⚠️</div>
+                    <div class="ps-error-title">Analysis Failed</div>
+                    <p class="ps-error-msg">Failed to connect to the backend analyzer.</p>
+                    <p class="ps-error-sub">Make sure your FastAPI server is running on <code>localhost:8000</code>.</p>
+                    <button class="ps-retry-btn" id="ps-retry-btn">Retry Scan</button>
+                </div>
+            `;
+            const retryBtn = document.getElementById('ps-retry-btn');
+            if (retryBtn) {
+                retryBtn.addEventListener('click', () => {
+                    analyzePolicy();
+                });
+            }
+        }
     }
 }
 
 // Auto-inject and optionally auto-trigger if on a policy page
 if (isPolicyPage()) {
     injectSidebar();
-    // Auto-open is aggressive, so we just show the floating button by default
-    // user clicks it to scan.
 }
 
 // Listen for messages from popup if user clicks manual scan
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "scan_now") {
-        injectSidebar(); // Ensure it exists
+        injectSidebar(); // Ensure sidebar exists
         const sidebar = document.getElementById('policy-safeguard-sidebar');
-        sidebar.classList.add('open');
+        if (sidebar) {
+            sidebar.classList.add('open');
+        }
         analyzePolicy();
-        sendResponse({status: "started"});
+        sendResponse({ status: "started" });
     }
 });

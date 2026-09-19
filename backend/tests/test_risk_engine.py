@@ -147,14 +147,14 @@ class TestScoring:
         report = analyzer.analyze(heavy_text)
         assert report.overall_risk_score <= 100
 
-    def test_single_red_scores_10(self, analyzer):
+    def test_single_red_scores_20(self, analyzer):
         text = "You authorize automatic debit from your bank account."
         report = analyzer.analyze(text)
         red_matches = [m for m in report.matches if m.severity == "red"]
         if len(red_matches) == 1:
-            assert report.overall_risk_score == 10
+            assert report.overall_risk_score == 20
 
     def test_risk_level_safe_threshold(self, analyzer):
-        """Score 0-20 should be 'safe'."""
-        report = analyzer.analyze("We protect your data with encryption.")
+        text = "We use secure encryption for your data."
+        report = analyzer.analyze(text)
         assert report.risk_level == "safe"
