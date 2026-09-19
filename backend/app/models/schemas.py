@@ -39,3 +39,9 @@ class RiskReport(BaseModel):
         default="",
         description="Auto-generated plain-English summary of key findings"
     )
+
+
+class AnalyzeRequest(BaseModel):
+    """Payload for the /analyze endpoint."""
+    text: str = Field(..., description="The privacy policy or terms of service text to analyze.")
+    url: str | None = Field(default=None, description="Optional URL where the text was found.")
