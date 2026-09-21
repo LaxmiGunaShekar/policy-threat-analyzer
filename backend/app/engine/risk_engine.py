@@ -35,7 +35,7 @@ class RiskAnalyzer:
         severity_counts = self._count_severities(matches)
         score = self._calculate_score(matches)
         risk_level = self._score_to_level(score)
-        summary = self._generate_summary(matches, score, risk_level)
+        summary = self._generate_summary(matches, score, risk_level, text)
 
         return RiskReport(
             total_matches=len(matches),
@@ -144,7 +144,7 @@ class RiskAnalyzer:
         else:
             return "dangerous"
 
-    def _generate_summary(self, matches: list[RiskMatch], score: int, level: str) -> str:
+    def _generate_summary(self, matches: list[RiskMatch], score: int, level: str, full_text: str = "") -> str:
         unique_reds = len(set(m.category for m in matches if m.severity == "red"))
         unique_yellows = len(set(m.category for m in matches if m.severity == "yellow"))
         red_categories = list({m.category for m in matches if m.severity == "red"})
@@ -178,30 +178,28 @@ class RiskAnalyzer:
         try:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-2.5-flash')
+            model = genai.GenerativeModel('gemini-1.5-flash')
             
-            # Prepare a prompt with the exact matched clauses for context
-            context_text = "\n".join([f"- {m.category}: {m.matched_text}" for m in matches])
-            if not context_text:
-                context_text = "No risky clauses detected."
+            # Truncate text to avoid massive payloads, but 30,000 chars is plenty for the AI to get the gist
+            policy_excerpt = full_text[:30000] if full_text else "No text provided."
 
             prompt = f"""
-            You are a privacy policy expert. Analyze the following detected risk clauses from a terms of service/privacy policy.
-            The policy has an overall risk score of {score}/100 ({level.upper()}).
+            You are an expert privacy lawyer and consumer advocate. I am providing you with the text of a privacy policy/terms of service.
             
-            Detected Clauses:
-            {context_text}
+            Please read the policy and write a 3-4 sentence "TL;DR" summary for a non-technical user. 
+            Focus ONLY on the most predatory, dangerous, or unusual clauses (e.g., selling data, tracking location, accessing contacts, auto-debits, waiving rights).
+            If the policy is completely standard and safe, reassure the user.
             
-            Write a 2-3 sentence "TL;DR" summary for a non-technical user. Explain exactly what they are agreeing to in plain English.
-            Be direct and conversational. Do not use markdown. If there are no risks, assure them it looks standard.
+            Explain exactly what they are agreeing to in plain, conversational English. Do not use markdown formatting.
+            
+            POLICY TEXT:
+            {policy_excerpt}
             """
             
             response = model.generate_content(prompt)
             if response and response.text:
-                # Prepend a robot emoji to indicate AI generation
-                return f"🤖 AI Summary: {response.text.strip()}"
+                return f"🤖 AI Analysis: {response.text.strip()}"
             return fallback_summary
         except Exception as e:
-            # If the API call fails for any reason, quietly fall back to the rule-based summary
             print(f"Gemini API summarization failed: {e}")
             return fallback_summary
