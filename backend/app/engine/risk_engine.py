@@ -176,30 +176,41 @@ class RiskAnalyzer:
             return fallback_summary
 
         try:
+            import time
             from google import genai
             client = genai.Client(api_key=api_key)
             
-            # Truncate text to avoid massive payloads, but 30,000 chars is plenty for the AI to get the gist
+            # Truncate to avoid massive payloads; 30k chars is plenty for the AI
             policy_excerpt = full_text[:30000] if full_text else "No text provided."
 
-            prompt = f"""
-            You are an expert privacy lawyer and consumer advocate. I am providing you with the text of a privacy policy/terms of service.
-            
-            Please read the policy and write a 3-4 sentence "TL;DR" summary for a non-technical user. 
-            Focus ONLY on the most predatory, dangerous, or unusual clauses (e.g., selling data, tracking location, accessing contacts, auto-debits, waiving rights).
-            If the policy is completely standard and safe, reassure the user.
-            
-            Explain exactly what they are agreeing to in plain, conversational English. Do not use markdown formatting.
-            
-            POLICY TEXT:
-            {policy_excerpt}
-            """
-            response = client.models.generate_content(
-                model='gemini-3.6-flash',
-                contents=prompt,
-            )
-            if response and response.text:
-                return f"🤖 AI Analysis: {response.text.strip()}"
+            prompt = f"""You are an expert privacy lawyer and consumer advocate. I am providing you with the text of a privacy policy/terms of service.
+
+Please read the policy and write a 3-4 sentence "TL;DR" summary for a non-technical user. 
+Focus ONLY on the most predatory, dangerous, or unusual clauses (e.g., selling data, tracking location, accessing contacts, auto-debits, waiving rights).
+If the policy is completely standard and safe, reassure the user.
+
+Explain exactly what they are agreeing to in plain, conversational English. Do not use markdown formatting.
+
+POLICY TEXT:
+{policy_excerpt}"""
+
+            # Try with gemini-2.0-flash (stable & fast). Retry once on 503 overload.
+            models_to_try = ['gemini-2.0-flash', 'gemini-1.5-flash-8b']
+            for model_name in models_to_try:
+                try:
+                    response = client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                    )
+                    if response and response.text:
+                        return f"🤖 AI Analysis: {response.text.strip()}"
+                except Exception as model_err:
+                    err_str = str(model_err)
+                    if '503' in err_str or 'UNAVAILABLE' in err_str:
+                        # Model overloaded, wait briefly and try next model
+                        time.sleep(1)
+                        continue
+                    raise model_err
             return fallback_summary
         except Exception as e:
             print(f"Gemini API summarization failed: {e}")
