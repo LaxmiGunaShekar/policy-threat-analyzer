@@ -176,9 +176,8 @@ class RiskAnalyzer:
             return fallback_summary
 
         try:
-            import google.generativeai as genai
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-1.5-flash')
+            from google import genai
+            client = genai.Client(api_key=api_key)
             
             # Truncate text to avoid massive payloads, but 30,000 chars is plenty for the AI to get the gist
             policy_excerpt = full_text[:30000] if full_text else "No text provided."
@@ -196,7 +195,10 @@ class RiskAnalyzer:
             {policy_excerpt}
             """
             
-            response = model.generate_content(prompt)
+            response = client.models.generate_content(
+                model='gemini-2.5-flash',
+                contents=prompt,
+            )
             if response and response.text:
                 return f"🤖 AI Analysis: {response.text.strip()}"
             return fallback_summary
