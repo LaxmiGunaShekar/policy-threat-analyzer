@@ -65,10 +65,12 @@ function injectSidebar() {
     // Event Listeners
     document.getElementById('ps-close').addEventListener('click', () => {
         sidebar.classList.remove('open');
+        document.body.style.overflow = ''; // Allow page scrolling
     });
 
     triggerBtn.addEventListener('click', () => {
         sidebar.classList.add('open');
+        document.body.style.overflow = 'hidden'; // Prevent page scrolling
         analyzePolicy();
     });
 }
@@ -373,6 +375,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const sidebar = document.getElementById('policy-safeguard-sidebar');
         if (sidebar) {
             sidebar.classList.add('open');
+            document.body.style.overflow = 'hidden';
         }
         analyzePolicy();
         sendResponse({ status: "started" });
