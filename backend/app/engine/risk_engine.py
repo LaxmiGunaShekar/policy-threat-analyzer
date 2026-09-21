@@ -194,23 +194,29 @@ Explain exactly what they are agreeing to in plain, conversational English. Do n
 POLICY TEXT:
 {policy_excerpt}"""
 
-            # Try with gemini-2.0-flash (stable & fast). Retry once on 503 overload.
-            models_to_try = ['gemini-2.0-flash', 'gemini-1.5-flash-8b']
-            for model_name in models_to_try:
+            # Retry up to 3 times with increasing delay for 503 overload errors
+            MODEL = 'gemini-3.6-flash'
+            last_error = None
+            for attempt in range(3):
                 try:
                     response = client.models.generate_content(
-                        model=model_name,
+                        model=MODEL,
                         contents=prompt,
                     )
                     if response and response.text:
                         return f"🤖 AI Analysis: {response.text.strip()}"
-                except Exception as model_err:
-                    err_str = str(model_err)
-                    if '503' in err_str or 'UNAVAILABLE' in err_str:
-                        # Model overloaded, wait briefly and try next model
-                        time.sleep(1)
+                    return fallback_summary
+                except Exception as attempt_err:
+                    last_error = str(attempt_err)
+                    if '503' in last_error or 'UNAVAILABLE' in last_error:
+                        wait = (attempt + 1) * 2  # 2s, 4s, 6s
+                        print(f"Gemini overloaded, retrying in {wait}s (attempt {attempt + 1}/3)...")
+                        time.sleep(wait)
                         continue
-                    raise model_err
+                    # Non-retriable error (404, auth, etc.)
+                    raise attempt_err
+
+            print(f"Gemini API summarization failed after retries: {last_error}")
             return fallback_summary
         except Exception as e:
             print(f"Gemini API summarization failed: {e}")
