@@ -145,14 +145,11 @@ class RiskAnalyzer:
             return "dangerous"
 
     def _generate_summary(self, matches: list[RiskMatch], score: int, level: str) -> str:
-        if not matches:
-            return "No significant risks were detected. This policy looks very standard and safe."
-
         unique_reds = len(set(m.category for m in matches if m.severity == "red"))
         unique_yellows = len(set(m.category for m in matches if m.severity == "yellow"))
-
         red_categories = list({m.category for m in matches if m.severity == "red"})
 
+        # Standard rule-based fallback summary
         parts = []
         if unique_reds == 0 and unique_yellows == 0:
             parts.append("This policy is relatively standard and doesn't contain any major red flags.")
@@ -167,4 +164,44 @@ class RiskAnalyzer:
         elif unique_reds >= 1:
             parts.append("⚠️ Review the red flagged clauses below before agreeing.")
 
-        return " ".join(parts)
+        fallback_summary = " ".join(parts)
+
+        # Attempt to use Gemini AI for a smart summary if the API key is configured
+        import os
+        from dotenv import load_dotenv
+        load_dotenv()
+        
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            return fallback_summary
+
+        try:
+            import google.generativeai as genai
+            genai.configure(api_key=api_key)
+            model = genai.GenerativeModel('gemini-2.5-flash')
+            
+            # Prepare a prompt with the exact matched clauses for context
+            context_text = "\n".join([f"- {m.category}: {m.matched_text}" for m in matches])
+            if not context_text:
+                context_text = "No risky clauses detected."
+
+            prompt = f"""
+            You are a privacy policy expert. Analyze the following detected risk clauses from a terms of service/privacy policy.
+            The policy has an overall risk score of {score}/100 ({level.upper()}).
+            
+            Detected Clauses:
+            {context_text}
+            
+            Write a 2-3 sentence "TL;DR" summary for a non-technical user. Explain exactly what they are agreeing to in plain English.
+            Be direct and conversational. Do not use markdown. If there are no risks, assure them it looks standard.
+            """
+            
+            response = model.generate_content(prompt)
+            if response and response.text:
+                # Prepend a robot emoji to indicate AI generation
+                return f"🤖 AI Summary: {response.text.strip()}"
+            return fallback_summary
+        except Exception as e:
+            # If the API call fails for any reason, quietly fall back to the rule-based summary
+            print(f"Gemini API summarization failed: {e}")
+            return fallback_summary
