@@ -35,7 +35,9 @@ class RiskAnalyzer:
         severity_counts = self._count_severities(matches)
         score = self._calculate_score(matches)
         risk_level = self._score_to_level(score)
-        summary = self._generate_summary(matches, score, risk_level, text)
+        # Skip Gemini here — AI is now triggered separately via /ai-summary
+        summary = self._generate_summary(matches, score, risk_level, full_text="")
+
 
         return RiskReport(
             total_matches=len(matches),
@@ -45,6 +47,12 @@ class RiskAnalyzer:
             matches=matches,
             summary=summary,
         )
+
+    def get_ai_summary(self, text: str) -> str:
+        """Call Gemini AI to generate a plain-English TL;DR for the given policy text.
+        Returns a string starting with '🤖 AI Analysis:' or a fallback message."""
+        fallback = "AI analysis unavailable. Add your GEMINI_API_KEY to the .env file to enable this feature."
+        return self._generate_summary([], 0, "unknown", full_text=text) or fallback
 
     def _preprocess(self, text: str) -> str:
         """Normalize text for matching: collapse whitespace, strip edges."""

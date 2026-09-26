@@ -8,13 +8,13 @@ from app.models.schemas import AnalyzeRequest, RiskReport
 app = FastAPI(
     title="Context-Aware Digital Terms & Privacy Policy Threat Analyzer",
     description="API for analyzing privacy policies and terms of service for predatory clauses.",
-    version="1.0.0"
+    version="2.0.0"
 )
 
 # Configure CORS for the Chrome Extension
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, restrict to extension ID or specific domains
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,16 +22,37 @@ app.add_middleware(
 
 analyzer = RiskAnalyzer()
 
+
 @app.get("/health")
 def health_check():
-    return {"status": "ok", "message": "Threat Analyzer Engine is running."}
+    return {"status": "ok", "message": "Threat Analyzer Engine is running.", "version": "2.0.0"}
+
 
 @app.post("/analyze", response_model=RiskReport)
 def analyze_policy(request: AnalyzeRequest):
+    """Fast rule-based analysis. Does NOT call Gemini AI.
+    Use /ai-summary for the AI-powered TL;DR summary."""
     try:
-        # Run the text through our risk engine
         report = analyzer.analyze(request.text)
         return report
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
+
+class AISummaryRequest(BaseModel):
+    text: str
+
+
+class AISummaryResponse(BaseModel):
+    summary: str
+
+
+@app.post("/ai-summary", response_model=AISummaryResponse)
+def get_ai_summary(request: AISummaryRequest):
+    """Call Google Gemini to generate a plain-English TL;DR of the policy.
+    Requires GEMINI_API_KEY in the .env file."""
+    try:
+        summary = analyzer.get_ai_summary(request.text)
+        return AISummaryResponse(summary=summary)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"AI summary failed: {str(e)}")
