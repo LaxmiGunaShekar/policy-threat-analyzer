@@ -9,6 +9,12 @@ venv/
 htmlcov/
 demo_output.txt
 
+# Secrets — NEVER commit these
+.env
+*.env
+.env.local
+.env.production
+
 # OS
 .DS_Store
 Thumbs.db
