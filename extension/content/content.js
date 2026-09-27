@@ -78,16 +78,41 @@ function injectSidebar() {
   `;
   document.body.appendChild(sidebar);
 
-  // Floating trigger button
+  // Floating trigger button — inline style overrides any page CSS
   const btn = document.createElement('button');
   btn.id = 'policy-safeguard-trigger';
   btn.innerHTML = `<span class="ps-btn-icon">🛡️</span><span>Analyze Policy</span>`;
+  // Force position with inline style as fallback — page CSS cannot override this
+  btn.setAttribute('style', [
+    'position:fixed',
+    'bottom:28px',
+    'right:28px',
+    'z-index:2147483646',
+    'background:linear-gradient(135deg,#6366f1,#4f46e5)',
+    'color:#fff',
+    'border:none',
+    'border-radius:50px',
+    'padding:13px 22px',
+    'display:flex',
+    'align-items:center',
+    'gap:9px',
+    'font-family:Inter,-apple-system,sans-serif',
+    'font-size:14px',
+    'font-weight:700',
+    'cursor:pointer',
+    'box-shadow:0 8px 28px rgba(99,102,241,0.45)',
+    'letter-spacing:0.1px',
+    'animation:ps-float 4s ease-in-out infinite',
+    'transition:transform 0.3s,box-shadow 0.3s',
+    'all:initial',
+  ].join('!important;') + '!important');
   document.body.appendChild(btn);
 
   // Close
   document.getElementById('ps-close').addEventListener('click', () => {
     sidebar.classList.remove('open');
     document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
   });
 
   // Open + scan
@@ -96,6 +121,7 @@ function injectSidebar() {
     document.body.style.overflow = 'hidden';
     analyzePolicy();
   });
+
 }
 
 // ── Render the risk report ────────────────────────────────────────────
