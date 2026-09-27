@@ -15,7 +15,6 @@
 
 /* ── Sidebar ─────────────────────────────────────────────────────── */
 #policy-safeguard-sidebar {
-  all: initial !important;
   position: fixed !important;
   top: 0px !important;
   right: -510px !important;

@@ -82,8 +82,8 @@ function injectSidebar() {
   const btn = document.createElement('button');
   btn.id = 'policy-safeguard-trigger';
   btn.innerHTML = `<span class="ps-btn-icon">🛡️</span><span>Analyze Policy</span>`;
-  // Force position with inline style as fallback — page CSS cannot override this
-  btn.setAttribute('style', [
+  // Force position with inline style — page CSS cannot override individual !important properties
+  btn.style.cssText = [
     'position:fixed',
     'bottom:28px',
     'right:28px',
@@ -91,21 +91,23 @@ function injectSidebar() {
     'background:linear-gradient(135deg,#6366f1,#4f46e5)',
     'color:#fff',
     'border:none',
+    'outline:none',
     'border-radius:50px',
     'padding:13px 22px',
     'display:flex',
     'align-items:center',
     'gap:9px',
-    'font-family:Inter,-apple-system,sans-serif',
+    'font-family:"Inter",-apple-system,BlinkMacSystemFont,sans-serif',
     'font-size:14px',
     'font-weight:700',
     'cursor:pointer',
     'box-shadow:0 8px 28px rgba(99,102,241,0.45)',
     'letter-spacing:0.1px',
+    'line-height:1',
+    'white-space:nowrap',
+    'text-decoration:none',
     'animation:ps-float 4s ease-in-out infinite',
-    'transition:transform 0.3s,box-shadow 0.3s',
-    'all:initial',
-  ].join('!important;') + '!important');
+  ].map(s => s + ' !important').join('; ');
   document.body.appendChild(btn);
 
   // Close
